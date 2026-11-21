@@ -11,8 +11,12 @@
   <!-- Zero-Flash Magic Mode Guard: executes synchronously before any DOM paint -->
   <script>
     (function () {
-      if (new URLSearchParams(window.location.search).get('magic') === 'true') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('magic') === 'true') {
         document.documentElement.classList.add('magic-mode', 'magic-transparent');
+        if (params.get('embedded') === '1') {
+          document.documentElement.classList.add('magic-embedded');
+        }
         window.addEventListener('message', function captureEarlyRoster(event) {
           if (event.data && event.data.type === 'ROSTER_DATA' && !window.__ROSTER_LISTENER_READY__) {
             window.__PENDING_ROSTER_DATA__ = event.data.text;
@@ -48,6 +52,10 @@
       backdrop-filter: blur(22px) saturate(165%);
       -webkit-backdrop-filter: blur(22px) saturate(165%);
     }
+    /* When embedded inside the Magic Roster bookmarklet host, host already provides the continuous blur */
+    html.magic-mode.magic-embedded #magic-bg-blur {
+      display: none !important;
+    }
     html.magic-mode #magic-mode-view {
       display: flex !important;
       position: fixed;
@@ -66,7 +74,7 @@
 </head>
 <body class="text-slate-100 min-h-screen lg:h-screen lg:overflow-x-hidden font-sans flex flex-col justify-between selection:bg-blue-500 selection:text-white relative">
   
-  <!-- Frosted Aviation Backdrop Blur (keeps portal subtly visible behind) -->
+  <!-- Frosted Aviation Backdrop Blur (used in standalone ?magic=true mode) -->
   <div id="magic-bg-blur" class="hidden magic-backdrop">
     <div class="magic-atmo-glow magic-atmo-glow-1"></div>
     <div class="magic-atmo-glow magic-atmo-glow-2"></div>
@@ -289,7 +297,6 @@
 
         <!-- Realistic Aviation Radar & Great-Circle Flight Path Stage -->
         <div class="magic-aviation-stage magic-item delay-150" aria-hidden="true">
-          <!-- Soft ATC Radar Sweep -->
           <div class="magic-radar-disc">
             <div class="magic-radar-ring ring-1"></div>
             <div class="magic-radar-ring ring-2"></div>
@@ -297,14 +304,12 @@
             <div class="magic-radar-sweep-cone"></div>
           </div>
 
-          <!-- Drifting High-Altitude Cloud Horizon Wisps -->
           <div class="magic-cloud-layer">
             <span class="magic-cloud cloud-1"></span>
             <span class="magic-cloud cloud-2"></span>
             <span class="magic-cloud cloud-3"></span>
           </div>
 
-          <!-- Vector Great-Circle Route + Animated Widebody Aircraft -->
           <svg class="magic-flight-svg" viewBox="0 0 420 116" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="contrail-grad" x1="44" y1="84" x2="376" y2="84" gradientUnits="userSpaceOnUse">
@@ -326,7 +331,6 @@
               </filter>
             </defs>
 
-            <!-- Subtle Flight Deck Horizon & Altitude Ticks -->
             <line x1="24" y1="84" x2="396" y2="84" stroke="url(#horizon-fade)" stroke-width="1" stroke-dasharray="2 6" />
             <g opacity="0.28" stroke="#94a3b8" stroke-width="1">
               <line x1="128" y1="81" x2="128" y2="87" />
@@ -334,13 +338,9 @@
               <line x1="292" y1="81" x2="292" y2="87" />
             </g>
 
-            <!-- Base Great-Circle Trajectory -->
             <path id="flight-arc-path" d="M 44 84 Q 210 6 376 84" stroke="rgba(148, 163, 184, 0.24)" stroke-width="1.5" stroke-dasharray="4 5" stroke-linecap="round" />
-
-            <!-- Luminous Animated Contrail -->
             <path d="M 44 84 Q 210 6 376 84" pathLength="100" stroke="url(#contrail-grad)" stroke-width="2.2" stroke-linecap="round" class="magic-contrail-line" />
 
-            <!-- Origin Hub Beacon (DXB) -->
             <g transform="translate(44, 84)">
               <circle r="11" class="magic-hub-pulse" fill="rgba(56, 189, 248, 0.22)" />
               <circle r="4" fill="#38bdf8" />
@@ -348,7 +348,6 @@
               <text x="0" y="21" text-anchor="middle" fill="#7dd3fc" font-size="9" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" letter-spacing="1.2">DXB</text>
             </g>
 
-            <!-- Destination Waypoint Beacon -->
             <g transform="translate(376, 84)">
               <circle r="11" class="magic-hub-pulse magic-hub-pulse-delayed" fill="rgba(52, 211, 153, 0.22)" />
               <circle r="4" fill="#34d399" />
@@ -356,22 +355,16 @@
               <text x="0" y="21" text-anchor="middle" fill="#6ee7b7" font-size="9" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" letter-spacing="1.2">SYNC</text>
             </g>
 
-            <!-- Mid-Route Flight Level Readout -->
             <text x="210" y="26" text-anchor="middle" fill="rgba(148, 163, 184, 0.55)" font-size="8" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" letter-spacing="1.8">FL380 • EK ROSTER</text>
 
-            <!-- Realistic Widebody Aircraft Following Exact Flight Arc -->
             <g class="magic-aircraft-group" filter="url(#plane-glow)">
               <animateMotion dur="5.2s" repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.38 0 0.62 1">
                 <mpath href="#flight-arc-path" />
               </animateMotion>
-              <!-- Fuselage & Swept Wings (facing +X for rotate="auto") -->
               <path d="M 14 0 C 14 -1.4 10 -2.1 5 -2.1 L 1.5 -2.1 L -4.5 -12.5 L -7.2 -12.5 L -4.2 -2.1 L -10 -1.7 L -13.2 -5.8 L -15 -5.8 L -13.4 -1.1 L -14.8 0 L -13.4 1.1 L -15 5.8 L -13.2 5.8 L -10 1.7 L -4.2 2.1 L -7.2 12.5 L -4.5 12.5 L 1.5 2.1 L 5 2.1 C 10 2.1 14 1.4 14 0 Z" fill="#f8fafc" />
-              <!-- Cockpit Windshield Accent -->
               <path d="M 10.2 -0.9 C 11.4 -0.6 11.4 0.6 10.2 0.9 L 9.4 0.7 C 10.2 0.4 10.2 -0.4 9.4 -0.7 Z" fill="#0284c7" />
-              <!-- Port (Red) & Starboard (Green) Wingtip Navigation Lights -->
               <circle cx="-6" cy="-12.2" r="1.25" fill="#ef4444" />
               <circle cx="-6" cy="12.2" r="1.25" fill="#22c55e" />
-              <!-- Anti-Collision White Strobe -->
               <circle cx="-1" cy="0" r="1.6" fill="#ffffff" class="magic-strobe-light" />
             </g>
           </svg>
@@ -383,7 +376,7 @@
           <p id="magic-month-title" class="magic-subtitle">Listening for Emirates Crew Portal...</p>
         </div>
 
-        <!-- Telemetry Stats Grid (2x3 Mobile, 3x2 Tablet & Desktop) -->
+        <!-- Telemetry Stats Grid -->
         <div class="magic-stats-grid">
           <div class="magic-stat-card is-loading magic-item delay-300" data-accent="blue">
             <div class="magic-stat-top">
