@@ -1031,13 +1031,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const standardUiView = document.getElementById('standard-ui-view');
   const magicModeView = document.getElementById('magic-mode-view');
   const magicBtnExport = document.getElementById('magic-btn-export');
-  const magicBtnExportIcon = document.getElementById('magic-btn-export-icon');
   const magicBtnExportLabel = document.getElementById('magic-btn-export-label');
   const magicBtnReview = document.getElementById('magic-btn-review');
   const magicBgBlur = document.getElementById('magic-bg-blur');
   const magicStatusPill = document.getElementById('magic-status-pill');
   const magicStatusText = document.getElementById('magic-status-text');
   const magicMainTitle = document.getElementById('magic-main-title');
+  const magicRouteChips = document.getElementById('magic-route-chips');
+  const magicDestCode = document.getElementById('magic-dest-code');
+  const magicDestSub = document.getElementById('magic-dest-sub');
 
   function notifyHostReady() {
     if (window.parent && window.parent !== window) {
@@ -1077,7 +1079,7 @@ document.addEventListener("DOMContentLoaded", () => {
           magicStatusPill.classList.remove('is-ready');
           magicStatusPill.classList.add('is-error');
         }
-        if (magicStatusText) magicStatusText.innerText = 'PARSE WARNING';
+        if (magicStatusText) magicStatusText.innerText = 'CHECK ROSTER';
         if (magicMainTitle) magicMainTitle.innerText = 'Manual Review Needed';
         requestAnimationFrame(() => notifyHostReady());
       }
@@ -1099,6 +1101,63 @@ document.addEventListener("DOMContentLoaded", () => {
     processIncomingRoster(bufferedRoster);
   }
 
+  function renderMagicDestinations(destinations) {
+    if (!magicRouteChips) return;
+    magicRouteChips.innerHTML = '';
+
+    if (destinations.length === 0) {
+      magicRouteChips.classList.add('hidden');
+      if (magicDestCode) magicDestCode.textContent = 'ICS';
+      if (magicDestSub) magicDestSub.textContent = 'CALENDAR';
+      return;
+    }
+
+    const firstIata = destinations[0];
+    const firstMeta = state.airports[firstIata] || BUILTIN_AIRPORTS[firstIata];
+    if (magicDestCode) magicDestCode.textContent = firstIata;
+    if (magicDestSub) {
+      const cityLabel = (firstMeta?.city || 'OUTSTATION').toUpperCase().slice(0, 12);
+      magicDestSub.textContent = cityLabel;
+    }
+
+    const maxVisible = 5;
+    const shown = destinations.slice(0, maxVisible);
+    const remaining = destinations.length - shown.length;
+
+    shown.forEach(iata => {
+      const chip = document.createElement('span');
+      chip.className = 'magic-route-chip';
+      const meta = state.airports[iata] || BUILTIN_AIRPORTS[iata];
+      if (meta?.city) chip.title = `${meta.city} (${iata})`;
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', '0 0 12 12');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('aria-hidden', 'true');
+      const poly = document.createElementNS(svgNS, 'polygon');
+      poly.setAttribute('points', '6,1.2 10.8,6 6,10.8 1.2,6');
+      poly.setAttribute('fill', 'currentColor');
+      svg.appendChild(poly);
+
+      const label = document.createElement('span');
+      label.textContent = iata;
+
+      chip.appendChild(svg);
+      chip.appendChild(label);
+      magicRouteChips.appendChild(chip);
+    });
+
+    if (remaining > 0) {
+      const moreChip = document.createElement('span');
+      moreChip.className = 'magic-route-chip is-more';
+      moreChip.textContent = `+${remaining} MORE`;
+      magicRouteChips.appendChild(moreChip);
+    }
+
+    magicRouteChips.classList.remove('hidden');
+  }
+
   function updateMagicStatistics() {
     let flightCount = 0;
     let layoverCount = 0;
@@ -1106,6 +1165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let offCount = 0;
     let totalMs = 0;
     let totalEvents = state.parsedEvents.length;
+    const uniqueDestinations = [];
 
     const monthNamesLong = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const monthTitle = document.getElementById('magic-month-title');
@@ -1119,11 +1179,12 @@ document.addEventListener("DOMContentLoaded", () => {
         magicStatusPill.classList.remove('is-ready');
         magicStatusPill.classList.add('is-error');
       }
-      if (magicStatusText) magicStatusText.innerText = 'NO EVENTS DETECTED';
+      if (magicStatusText) magicStatusText.innerText = 'NO DATA';
       if (magicMainTitle) magicMainTitle.innerText = 'Roster Not Detected';
       if (monthTitle) monthTitle.innerText = 'Open Print/Email view & try again';
       if (magicBtnExport) magicBtnExport.disabled = true;
       if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'No Events to Export';
+      renderMagicDestinations([]);
       return;
     }
 
@@ -1131,8 +1192,8 @@ document.addEventListener("DOMContentLoaded", () => {
       magicStatusPill.classList.remove('is-error');
       magicStatusPill.classList.add('is-ready');
     }
-    if (magicStatusText) magicStatusText.innerText = 'FLIGHT PLAN READY';
-    if (magicMainTitle) magicMainTitle.innerText = 'Cleared for Calendar Sync';
+    if (magicStatusText) magicStatusText.innerText = 'CLEARED';
+    if (magicMainTitle) magicMainTitle.innerText = 'Flight Plan Ready';
     if (monthTitle) monthTitle.innerText = `${monthNamesLong[state.currentMonth]} ${state.currentYear} Roster`;
 
     state.parsedEvents.forEach(evt => {
@@ -1140,6 +1201,11 @@ document.addEventListener("DOMContentLoaded", () => {
         flightCount++;
         if (evt.startUtc && evt.endUtc) {
           totalMs += (evt.endUtc - evt.startUtc);
+        }
+        if (evt.destination && evt.destination !== HOME_BASE && /^[A-Z]{3}$/.test(evt.destination)) {
+          if (!uniqueDestinations.includes(evt.destination)) {
+            uniqueDestinations.push(evt.destination);
+          }
         }
       } else if (evt.category === 'layover') {
         layoverCount++;
@@ -1150,13 +1216,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    const blockHours = Math.floor(totalMs / (1000 * 60 * 60));
+    renderMagicDestinations(uniqueDestinations);
 
-    const animateValue = (id, endValue, suffix = '', duration = 950, delayMs = 0) => {
+    const totalMinutes = Math.max(0, Math.round(totalMs / (1000 * 60)));
+    const blockHours = Math.floor(totalMinutes / 60);
+    const blockMins = totalMinutes % 60;
+
+    const animateValue = (id, endValue, formatter, duration = 900, delayMs = 0) => {
       const obj = document.getElementById(id);
       if (!obj) return;
 
-      obj.innerText = "0" + suffix;
+      obj.innerText = formatter(0, true);
 
       setTimeout(() => {
         let startTimestamp = null;
@@ -1164,29 +1234,32 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!startTimestamp) startTimestamp = timestamp;
           const progress = Math.min((timestamp - startTimestamp) / duration, 1);
           const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-          obj.innerText = Math.floor(easeProgress * endValue) + suffix;
+          const current = Math.floor(easeProgress * endValue);
           if (progress < 1) {
+            obj.innerText = formatter(current, false);
             window.requestAnimationFrame(step);
           } else {
-            obj.innerText = endValue + suffix;
+            obj.innerText = formatter(endValue, true);
           }
         };
         window.requestAnimationFrame(step);
       }, delayMs);
     };
 
-    animateValue('stat-flights', flightCount, '', 900, 120);
-    animateValue('stat-hours', blockHours, 'h', 950, 180);
-    animateValue('stat-layovers', layoverCount, '', 900, 240);
-    animateValue('stat-turnarounds', turnaroundCount, '', 900, 300);
-    animateValue('stat-off', offCount, '', 900, 360);
-    animateValue('stat-events', totalEvents, '', 1000, 420);
+    animateValue('stat-flights', flightCount, (v) => String(v), 850, 100);
+    animateValue('stat-hours', blockHours, (v, done) => {
+      if (done && blockMins > 0) return `${v}h ${String(blockMins).padStart(2, '0')}m`;
+      return `${v}h`;
+    }, 950, 150);
+    animateValue('stat-layovers', layoverCount, (v) => String(v), 850, 200);
+    animateValue('stat-turnarounds', turnaroundCount, (v) => String(v), 850, 250);
+    animateValue('stat-off', offCount, (v) => String(v), 850, 300);
+    animateValue('stat-events', totalEvents, (v) => String(v), 950, 350);
 
     if (magicBtnExport) {
       magicBtnExport.disabled = false;
       magicBtnExport.classList.remove('is-exported');
     }
-    if (magicBtnExportIcon) magicBtnExportIcon.innerText = '📥';
     if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Download .ics Calendar';
   }
 
@@ -1194,12 +1267,10 @@ document.addEventListener("DOMContentLoaded", () => {
     magicBtnExport.addEventListener('click', () => {
       if (btnExport) btnExport.click();
       magicBtnExport.classList.add('is-exported');
-      if (magicBtnExportIcon) magicBtnExportIcon.innerText = '✅';
       if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Calendar Exported';
 
       setTimeout(() => {
         magicBtnExport.classList.remove('is-exported');
-        if (magicBtnExportIcon) magicBtnExportIcon.innerText = '📥';
         if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Download .ics Calendar';
       }, 2800);
     });
