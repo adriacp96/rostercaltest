@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rostercal-v1.1';
+const CACHE_NAME = 'rostercal-v1.3';
 
 // Lista de todos los archivos necesarios para funcionar offline
 const ASSETS = [
@@ -9,8 +9,9 @@ const ASSETS = [
   './airports.js',
   './event_codes.js',
   './manifest.json',
-  './rostercalapp.png',
-  './success.gif'
+  './calendar.png',
+  './rosty.png',
+  './rostercalapp.png'
 ];
 
 // Evento de Instalación: Guarda los archivos en caché
@@ -48,7 +49,6 @@ self.addEventListener('fetch', (event) => {
       // Devuelve la versión en caché si existe, si no, hace la petición a internet
       return cachedResponse || fetch(event.request);
     }).catch(() => {
-      // Opcional: Podrías devolver una página de error offline aquí si fuera necesario
       console.error('Network request failed and no cache found for:', event.request.url);
     })
   );
