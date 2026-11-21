@@ -521,14 +521,12 @@ class ParserEngine {
         );
 
         if (shouldAddReport) {
-          // El Rep. time marca el final de la ventana de check-in (cierre del eGate)
           let repEndUtc = ParserEngine.parseToUtcDate(activeYear, activeMonth, currentDay, repTime, origin);
 
           if (repEndUtc >= startUtc) {
             repEndUtc.setUTCDate(repEndUtc.getUTCDate() - 1);
           }
 
-          // La ventana de reporte inicia exactamente 1 hora antes del Rep. time
           let repStartUtc = new Date(repEndUtc.getTime() - 60 * 60 * 1000); 
           
           const repEventDate = new Date(repStartUtc);
@@ -938,7 +936,6 @@ class ICalGenerator {
         "STATUS:CONFIRMED"
       );
 
-      // Inject VALARM block if reminder is active
       const alarmPref = state.preferences.alarmReminder;
       if (alarmPref && alarmPref !== "NONE") {
         lines.push(
@@ -1029,6 +1026,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Magic Mode Controller ---
   const urlParams = new URLSearchParams(window.location.search);
   const isMagicMode = urlParams.get('magic') === 'true';
+  const isEmbedded = urlParams.get('embedded') === '1';
 
   const standardUiView = document.getElementById('standard-ui-view');
   const magicModeView = document.getElementById('magic-mode-view');
@@ -1041,13 +1039,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const magicStatusText = document.getElementById('magic-status-text');
   const magicMainTitle = document.getElementById('magic-main-title');
 
+  function notifyHostReady() {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'MAGIC_READY' }, '*');
+    }
+  }
+
   if (isMagicMode && standardUiView && magicModeView) {
     standardUiView.classList.add('hidden');
     magicModeView.classList.remove('hidden');
     magicModeView.classList.add('flex');
-    if (magicBgBlur) magicBgBlur.classList.remove('hidden');
+    if (magicBgBlur && !isEmbedded) magicBgBlur.classList.remove('hidden');
 
     document.documentElement.classList.add('magic-mode', 'magic-transparent');
+    if (isEmbedded) document.documentElement.classList.add('magic-embedded');
     document.body.classList.add('magic-transparent');
   }
 
@@ -1063,6 +1068,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (isMagicMode) {
         updateMagicStatistics();
+        requestAnimationFrame(() => notifyHostReady());
       }
     } catch (err) {
       console.error("Magic mode parsing error:", err);
@@ -1073,6 +1079,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (magicStatusText) magicStatusText.innerText = 'PARSE WARNING';
         if (magicMainTitle) magicMainTitle.innerText = 'Manual Review Needed';
+        requestAnimationFrame(() => notifyHostReady());
       }
       Toast.show("Failed to instantly parse roster. Please review manually.", "error");
     }
@@ -1200,7 +1207,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (magicBtnReview) {
     magicBtnReview.addEventListener('click', () => {
-      document.documentElement.classList.remove('magic-mode', 'magic-transparent');
+      document.documentElement.classList.remove('magic-mode', 'magic-embedded', 'magic-transparent');
       document.body.classList.remove('magic-transparent');
 
       if (magicBgBlur) magicBgBlur.classList.add('hidden');
@@ -1361,7 +1368,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alarmReminder: prefAlarmReminder?.value || "120"
       };
 
-      // Save to localStorage
       localStorage.setItem('rosterCalPrefs', JSON.stringify(state.preferences));
       
       if (rawInput && rawInput.value.trim()) {
