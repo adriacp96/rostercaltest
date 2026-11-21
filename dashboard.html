@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RosterCal Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Main scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+    
+    /* Compact internal scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.6); border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
+
+    /* Prevent text selection when clicking accordions fast */
+    .no-select { user-select: none; -webkit-user-select: none; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-blue-500 selection:text-white relative">
+
+  <!-- Header & Navigation (Consistent with index.html) -->
+  <header class="apple-glass z-50 sticky top-0 relative">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 flex items-center justify-center">
+          <img src="calendar.png" alt="RosterCal Logo" class="w-8 h-8 object-contain">
+        </div>
+        <h1 class="text-xl font-extrabold animated-blue-text bg-clip-text text-transparent">RosterCal Admin</h1>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <a href="index.html" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shadow-sm flex items-center space-x-1.5 btn">
+          <span>←</span><span>Back to App</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-4 flex space-x-6 text-xs font-semibold border-t border-slate-700/80 pt-2 overflow-x-auto no-scrollbar">
+      <button id="tab-codes" onclick="switchTab('codes')" class="pb-2 border-b-2 border-blue-500 text-blue-400 cursor-pointer transition whitespace-nowrap uppercase tracking-tight btn">Event Codes</button>
+      <button id="tab-rosters" onclick="switchTab('rosters')" class="pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer transition whitespace-nowrap uppercase tracking-tight btn">Parsed Rosters</button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-4 flex-grow w-full space-y-6 z-10">
+
+    <!-- VIEW 1: CODES COLLECTION -->
+    <div id="view-codes" class="block space-y-6 animate-fade-in">
+      
+      <!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="apple-glass rounded-2xl p-4 shadow">
+          <p class="text-[10px] text-slate-400 uppercase font-bold">Total Collected</p>
+          <p id="stat-total" class="text-2xl font-extrabold text-blue-400 mt-1">0</p>
+        </div>
+        <div class="apple-glass rounded-2xl p-4 shadow">
+          <p class="text-[10px] text-slate-400 uppercase font-bold">Unknown (Pending)</p>
+          <p id="stat-unknown" class="text-2xl font-extrabold text-amber-400 mt-1">0</p>
+        </div>
+        <div class="apple-glass rounded-2xl p-4 shadow">
+          <p class="text-[10px] text-slate-400 uppercase font-bold">Total Occurrences</p>
+          <p id="stat-occurrences" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Filters & Actions -->
+      <div class="apple-glass rounded-2xl p-4 flex flex-col lg:flex-row justify-between gap-3">
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full lg:w-auto">
+          <input type="text" id="search-input" placeholder="Search code or description..." class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white focus:border-blue-500 w-full sm:w-64">
+          <select id="filter-status" class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 w-full sm:w-auto">
+            <option value="UNKNOWN" selected>Unknown Only</option>
+            <option value="ALL">All Codes</option>
+            <option value="KNOWN">Known Only</option>
+          </select>
+        </div>
+        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto justify-end">
+          <button id="btn-refresh-codes" class="w-full sm:w-auto bg-slate-900/90 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700/80 transition shadow btn">↻ Refresh</button>
+          <button id="btn-export-json" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-1.5 rounded-xl shadow transition btn">📥 Export JSON</button>
+          <button id="btn-reset-codes" class="w-full sm:w-auto bg-red-600/90 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-xl border border-red-700/80 transition shadow btn">🗑️ Reset All</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="apple-glass rounded-2xl overflow-hidden shadow">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+            <thead>
+              <tr class="bg-slate-950/90 border-b border-slate-700/80 text-slate-400 text-[10px] uppercase">
+                <th class="py-3 px-4">Code</th>
+                <th class="py-3 px-4">Title / Description</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Occurrences</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="codes-table-body" class="divide-y divide-slate-800/60">
+              <tr>
+                <td colspan="5" class="py-12 text-center">
+                  <div class="flex flex-col items-center justify-center space-y-2 opacity-60">
+                    <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-xs text-slate-400 font-medium">Loading codes...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: PARSED ROSTERS -->
+    <div id="view-rosters" class="hidden space-y-4 animate-fade-in">
+      
+      <!-- Rosters Search & Filter Bar -->
+      <div class="apple-glass rounded-2xl p-4 flex flex-col lg:flex-row justify-between gap-3 mb-2 shadow">
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
+          <input type="text" id="search-rosters" placeholder="Search Staff No..." class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-white focus:border-blue-500 w-full sm:w-48 shadow-inner">
+          <select id="filter-rosters-month" class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 w-full sm:w-auto shadow-inner">
+            <option value="ALL" selected>All Months</option>
+          </select>
+          <select id="sort-rosters" class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-300 w-full sm:w-auto shadow-inner">
+            <option value="NEWEST" selected>Sort: Newest Uploads</option>
+            <option value="OLDEST">Sort: Oldest Uploads</option>
+          </select>
+        </div>
+        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto justify-end">
+          <button id="btn-refresh-rosters" class="bg-slate-900/90 hover:bg-slate-800 text-white text-xs px-4 py-1.5 rounded-xl border border-slate-700/80 transition w-full sm:w-auto shadow btn">↻ Fetch Rosters</button>
+          <button id="btn-reset-rosters" class="bg-red-600/90 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-xl border border-red-700/80 transition w-full sm:w-auto shadow btn">🗑️ Reset All</button>
+        </div>
+      </div>
+
+      <!-- Vertical Stack Container for Staff Rows -->
+      <div id="rosters-container" class="space-y-3">
+        <div class="flex flex-col items-center justify-center py-12 space-y-2 opacity-60">
+          <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-xs text-slate-400 font-medium">Loading rosters...</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Consistent Footer -->
+  <footer class="apple-glass border-t border-slate-800/80 py-2 text-center text-[10px] text-slate-500 font-medium tracking-tight shrink-0 relative z-10">
+    <p>Made with ❤️ by Adrià</p>
+  </footer>
+
+  <script>
+    // --- SUPABASE CONFIG ---
+    const SUPABASE_URL = "https://qrwzmbylcgwgteywnjss.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyd3ptYnlsY2d3Z3RleXduanNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNjUwMTUsImV4cCI6MjEwMTc0MTAxNX0.Xexca7uxPjvm6orZTecDmfBIyqnpetC_v3b4mtkul9g"; 
+
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      document.getElementById('view-codes').classList.toggle('hidden', tab !== 'codes');
+      document.getElementById('view-codes').classList.toggle('block', tab === 'codes');
+      document.getElementById('view-rosters').classList.toggle('hidden', tab !== 'rosters');
+      document.getElementById('view-rosters').classList.toggle('block', tab === 'rosters');
+      
+      const activeClass = "pb-2 border-b-2 border-blue-500 text-blue-400 cursor-pointer transition whitespace-nowrap uppercase tracking-tight btn";
+      const inactiveClass = "pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer transition whitespace-nowrap uppercase tracking-tight btn";
+      
+      document.getElementById('tab-codes').className = tab === 'codes' ? activeClass : inactiveClass;
+      document.getElementById('tab-rosters').className = tab === 'rosters' ? activeClass : inactiveClass;
+    }
+
+    // --- UTILS ---
+    window.toggleAccordion = function(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon-' + id);
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            icon.innerText = '▼';
+        } else {
+            el.classList.add('hidden');
+            icon.innerText = '▶';
+        }
+    };
+
+    // --- DELETION LOGIC (ROSTERS) ---
+    async function executeDelete(query, confirmMsg) {
+      if (!confirm(confirmMsg)) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/roster_events?${query}`, {
+          method: 'DELETE',
+          headers: { 
+            "apikey": SUPABASE_ANON_KEY, 
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Prefer": "return=minimal"
+          }
+        });
+        
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || "Failed to delete data.");
+        }
+        await fetchRosters();
+      } catch (err) {
+        console.error("Delete Error:", err);
+        alert("Deletion failed: " + err.message);
+      }
+    }
+
+    window.deleteStaff = function(staffId, event) {
+      event.stopPropagation();
+      executeDelete(`staff_number=eq.${staffId}`, `⚠️ Are you sure you want to permanently delete ALL rosters for Staff ${staffId}?`);
+    };
+
+    window.deleteMonth = function(staffId, monthLabel, sessionIdsStr, event) {
+      event.stopPropagation();
+      executeDelete(`sync_session_id=in.(${sessionIdsStr})`, `⚠️ Delete all ${monthLabel} rosters for Staff ${staffId}?`);
+    };
+
+    window.deleteVersion = function(sessionId, vLabel, event) {
+      event.stopPropagation();
+      executeDelete(`sync_session_id=eq.${sessionId}`, `⚠️ Delete imported ${vLabel}?`);
+    };
+
+    // --- VIEW 1: CODES LOGIC ---
+    let allCodes = [];
+    async function fetchCodes() {
+      const tableBody = document.getElementById('codes-table-body');
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-12 text-center">
+            <div class="flex flex-col items-center justify-center space-y-2 opacity-60">
+              <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <span class="text-xs text-slate-400 font-medium">Loading codes...</span>
+            </div>
+          </td>
+        </tr>`;
+      
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/collected_event_codes?select=*&order=occurrence_count.desc`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        allCodes = await res.json();
+        updateCodeStats();
+        renderCodesTable();
+      } catch (err) {
+        console.error(err);
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-red-500 font-semibold">Failed to fetch event codes.</td></tr>`;
+      }
+    }
+
+    function updateCodeStats() {
+      document.getElementById('stat-total').innerText = allCodes.length;
+      document.getElementById('stat-unknown').innerText = allCodes.filter(c => !c.is_known).length;
+      document.getElementById('stat-occurrences').innerText = allCodes.reduce((sum, c) => sum + (c.occurrence_count || 1), 0);
+    }
+
+    function renderCodesTable() {
+      const search = document.getElementById('search-input').value.toUpperCase();
+      const filter = document.getElementById('filter-status').value;
+      const filtered = allCodes.filter(item => {
+        const titleStr = (item.raw_title || "").toUpperCase();
+        const matchesSearch = item.code.toUpperCase().includes(search) || titleStr.includes(search);
+        const matchesStatus = filter === 'ALL' || (filter === 'UNKNOWN' && !item.is_known) || (filter === 'KNOWN' && item.is_known);
+        return matchesSearch && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('codes-table-body').innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No matching codes found.</td></tr>`;
+        return;
+      }
+
+      document.getElementById('codes-table-body').innerHTML = filtered.map(item => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="py-3 px-4 font-bold text-blue-300 whitespace-nowrap">${item.code}</td>
+          <td class="py-3 px-4 text-slate-300 truncate max-w-[150px] sm:max-w-[200px]" title="${item.raw_title || '-'}">${item.raw_title || '-'}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap ${item.is_known ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50' : 'bg-amber-950 text-amber-300 border border-amber-800/50'}">
+              ${item.is_known ? 'Known' : 'Unknown'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center font-bold">${item.occurrence_count || 1}</td>
+          <td class="py-3 px-4 text-right space-x-1">
+            <button onclick="toggleKnown('${item.code}', ${!item.is_known})" class="text-[10px] px-2 py-1 rounded bg-slate-800 text-slate-200 border border-slate-700 whitespace-nowrap hover:bg-slate-700 transition">
+              ${item.is_known ? 'Mark Unknown' : 'Mark Known'}
+            </button>
+            <button onclick="deleteSingleCode('${item.code}')" class="text-slate-500 hover:text-red-400 hover:bg-red-900/20 px-1.5 py-1 rounded transition" title="Delete code">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function toggleKnown(code, state) {
+      await fetch(`${SUPABASE_URL}/rest/v1/collected_event_codes?code=eq.${code}`, {
+        method: 'PATCH',
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ is_known: state })
+      });
+      fetchCodes();
+    }
+
+    async function deleteSingleCode(code) {
+      if (!confirm(`⚠️ Are you sure you want to delete event code "${code}"?`)) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/collected_event_codes?code=eq.${code}`, {
+          method: 'DELETE',
+          headers: { 
+            "apikey": SUPABASE_ANON_KEY, 
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Prefer": "return=minimal"
+          }
+        });
+        if (!res.ok) throw new Error("Failed to delete code.");
+        fetchCodes();
+      } catch (err) {
+        console.error("Delete Code Error:", err);
+        alert("Deletion failed: " + err.message);
+      }
+    }
+
+    async function resetAllCodes() {
+      if (!confirm("⚠️ WARNING ⚠️\n\nAre you sure you want to permanently delete ALL collected event codes? This cannot be undone.")) {
+        return;
+      }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/collected_event_codes?code=not.is.null`, {
+          method: 'DELETE',
+          headers: { 
+            "apikey": SUPABASE_ANON_KEY, 
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Prefer": "return=minimal"
+          }
+        });
+        if (!res.ok) throw new Error("Failed to reset event codes.");
+        fetchCodes();
+      } catch (err) {
+        console.error("Reset Codes Error:", err);
+        alert("Reset failed: " + err.message);
+      }
+    }
+
+    document.getElementById('btn-refresh-codes').addEventListener('click', fetchCodes);
+    document.getElementById('btn-reset-codes').addEventListener('click', resetAllCodes);
+    document.getElementById('search-input').addEventListener('input', renderCodesTable);
+    document.getElementById('filter-status').addEventListener('change', renderCodesTable);
+
+    // EXPORT JSON LOGIC
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const unknownCodes = allCodes.filter(c => !c.is_known);
+      if(unknownCodes.length === 0) {
+        alert("No unknown codes available to export.");
+        return;
+      }
+      
+      const jsonStructure = {};
+      unknownCodes.forEach(c => {
+        jsonStructure[c.code] = {
+          title: c.raw_title || "Custom Duty",
+          emoji: "📌",
+          category: "general"
+        };
+      });
+
+      const blob = new Blob([JSON.stringify(jsonStructure, null, 2)], { type: "application/json" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `unknown_codes_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // --- VIEW 2: ROSTERS LOGIC ---
+    let allRosterEvents = [];
+
+    async function fetchRosters() {
+      const container = document.getElementById('rosters-container');
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 space-y-2 opacity-60">
+          <svg class="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span class="text-xs text-slate-400 font-medium">Loading rosters...</span>
+        </div>`;
+        
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/roster_events?select=*&order=created_at.desc`, {
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        
+        allRosterEvents = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(allRosterEvents.message || JSON.stringify(allRosterEvents));
+        }
+
+        updateRosterMonthFilter();
+        renderRosters();
+      } catch (err) {
+        console.error("Fetch Rosters Error:", err);
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <p class="text-red-500 text-sm font-bold">Error loading rosters!</p>
+            <p class="text-slate-400 text-xs mt-2 font-mono">${err.message}</p>
+          </div>`;
+      }
+    }
+
+    async function resetAllRosters() {
+      if (!confirm("⚠️ WARNING ⚠️\n\nAre you sure you want to permanently delete ALL parsed rosters from the database? This cannot be undone.")) {
+        return;
+      }
+      
+      const container = document.getElementById('rosters-container');
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 space-y-2 opacity-60">
+          <svg class="animate-spin h-6 w-6 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span class="text-xs text-slate-400 font-medium">Deleting all roster data...</span>
+        </div>`;
+      
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/roster_events?id=not.is.null`, {
+          method: 'DELETE',
+          headers: { 
+            "apikey": SUPABASE_ANON_KEY, 
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Prefer": "return=minimal"
+          }
+        });
+        
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || JSON.stringify(errData));
+        }
+
+        allRosterEvents = [];
+        updateRosterMonthFilter();
+        renderRosters();
+      } catch (err) {
+        console.error("Reset Error:", err);
+        alert("Failed to delete rosters: " + err.message);
+        fetchRosters();
+      }
+    }
+
+    function updateRosterMonthFilter() {
+        const monthSelect = document.getElementById('filter-rosters-month');
+        const currentVal = monthSelect.value;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const uniqueMonths = new Set();
+        allRosterEvents.forEach(evt => {
+            const d = evt.start_utc ? new Date(evt.start_utc) : new Date(evt.created_at);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            uniqueMonths.add(key);
+        });
+
+        const sortedMonths = Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a));
+        
+        let html = `<option value="ALL">All Months</option>`;
+        sortedMonths.forEach(mKey => {
+            const [y, m] = mKey.split('-');
+            const label = `${monthNames[parseInt(m, 10) - 1]} ${y}`;
+            html += `<option value="${mKey}">${label}</option>`;
+        });
+        
+        monthSelect.innerHTML = html;
+        if (sortedMonths.includes(currentVal)) {
+            monthSelect.value = currentVal;
+        }
+    }
+
+    function renderRosters() {
+      const container = document.getElementById('rosters-container');
+      container.innerHTML = "";
+
+      if (allRosterEvents.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-500 text-xs py-8">No roster events found in database.</div>`;
+        return;
+      }
+
+      const search = document.getElementById('search-rosters').value.trim().toUpperCase();
+      const monthFilter = document.getElementById('filter-rosters-month').value;
+      const sortOrder = document.getElementById('sort-rosters').value;
+
+      const grouped = {};
+      allRosterEvents.forEach(evt => {
+        const staff = evt.staff_number || "UNKNOWN";
+        if (search && !staff.toUpperCase().includes(search)) return;
+
+        const session = evt.sync_session_id;
+
+        if (!grouped[staff]) grouped[staff] = { sessions: {} };
+        
+        if (!grouped[staff].sessions[session]) {
+          grouped[staff].sessions[session] = { 
+            timestamp: evt.created_at, 
+            events: [],
+            rosterDate: evt.start_utc ? new Date(evt.start_utc) : new Date(evt.created_at) 
+          };
+        } else {
+           if (evt.start_utc && new Date(evt.start_utc) < grouped[staff].sessions[session].rosterDate) {
+               grouped[staff].sessions[session].rosterDate = new Date(evt.start_utc);
+           }
+        }
+        grouped[staff].sessions[session].events.push(evt);
+      });
+
+      Object.keys(grouped).forEach(staffId => {
+          const sessions = grouped[staffId].sessions;
+          Object.keys(sessions).forEach(sessionId => {
+              const d = sessions[sessionId].rosterDate;
+              const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+              
+              if (monthFilter !== 'ALL' && mKey !== monthFilter) {
+                  delete sessions[sessionId];
+              }
+          });
+          
+          if (Object.keys(sessions).length === 0) {
+              delete grouped[staffId];
+          }
+      });
+
+      const staffIds = Object.keys(grouped);
+      
+      if (staffIds.length === 0) {
+         container.innerHTML = `<div class="text-center text-slate-500 text-xs py-8">No rosters match your search/filters.</div>`;
+         return;
+      }
+
+      staffIds.sort((a, b) => {
+          const newestA = Math.max(...Object.values(grouped[a].sessions).map(s => new Date(s.timestamp).getTime()));
+          const newestB = Math.max(...Object.values(grouped[b].sessions).map(s => new Date(s.timestamp).getTime()));
+          return sortOrder === 'NEWEST' ? newestB - newestA : newestA - newestB;
+      });
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      staffIds.forEach(staffId => {
+        const staffSessions = grouped[staffId].sessions;
+        const sessionsByMonth = {};
+        
+        Object.keys(staffSessions).forEach(sessionId => {
+            const sData = staffSessions[sessionId];
+            const d = sData.rosterDate;
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const monthLabel = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+            
+            if (!sessionsByMonth[monthKey]) {
+                sessionsByMonth[monthKey] = { label: monthLabel, sessions: [] };
+            }
+            sessionsByMonth[monthKey].sessions.push({ id: sessionId, ...sData });
+        });
+
+        const sortedMonthKeys = Object.keys(sessionsByMonth).sort((a, b) => b.localeCompare(a));
+
+        let monthHtml = sortedMonthKeys.map(mKey => {
+            const monthData = sessionsByMonth[mKey];
+            const sortedVersions = monthData.sessions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const sessionIdsArray = sortedVersions.map(v => v.id).join(','); 
+            
+            const monthId = `month-${staffId}-${mKey}`;
+            
+            let versionsHtml = sortedVersions.map((vData, index) => {
+                const dateStr = new Date(vData.timestamp).toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                const versionNum = sortedVersions.length - index; 
+                
+                const eventsHtml = vData.events.map(e => {
+                    let badgeClass = "bg-slate-800 text-slate-300 border-slate-700/50";
+                    const cat = (e.category || '').toLowerCase();
+                    if (cat === 'flight') badgeClass = "bg-blue-900/40 text-blue-300 border-blue-800/50";
+                    else if (cat === 'layover' || cat === 'turnaround') badgeClass = "bg-amber-900/40 text-amber-300 border-amber-800/50";
+                    else if (cat === 'off') badgeClass = "bg-emerald-900/40 text-emerald-300 border-emerald-800/50";
+                    else if (cat === 'training' || cat === 'standby' || cat === 'report') badgeClass = "bg-violet-900/40 text-violet-300 border-violet-800/50";
+
+                    const date = e.start_utc ? new Date(e.start_utc).toLocaleDateString(undefined, {month: '2-digit', day: '2-digit'}) : '--/--';
+                    const code = e.event_code || '??';
+                    
+                    let route = '-';
+                    if (e.origin && e.destination && e.origin !== e.destination) route = `${e.origin}→${e.destination}`;
+                    else if (e.origin || e.destination) route = e.origin || e.destination;
+
+                    return `
+                    <div class="flex items-center justify-between py-1 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/50 rounded px-1 transition group">
+                      <div class="flex items-center space-x-2 overflow-hidden">
+                        <span class="text-[9px] text-slate-500 font-mono w-8 shrink-0">${date}</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold w-12 text-center border ${badgeClass} shrink-0">${code}</span>
+                        <span class="text-[10px] text-slate-300 truncate capitalize hidden sm:inline">${cat || 'General'}</span>
+                      </div>
+                      <span class="text-[9px] text-slate-400 font-mono shrink-0 group-hover:text-slate-200 transition">${route}</span>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div class="mt-3 pl-2 sm:pl-4 border-l-2 border-slate-700">
+                  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs mb-2 space-y-1 sm:space-y-0">
+                    <span class="text-slate-400 font-mono font-semibold">Version v${versionNum} <span class="text-slate-500 font-normal ml-1 hidden sm:inline">— Imp: ${dateStr}</span></span>
+                    <div class="flex items-center space-x-2 self-start sm:self-auto">
+                        <span class="bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded font-medium">${vData.events.length} events</span>
+                        <button onclick="deleteVersion('${vData.id}', 'v${versionNum}', event)" class="text-slate-500 hover:text-red-400 hover:bg-red-900/20 px-1.5 py-0.5 rounded transition" title="Delete this version">🗑️</button>
+                    </div>
+                  </div>
+                  <div class="bg-slate-950 border border-slate-800 rounded-lg p-2 max-h-40 overflow-y-auto overflow-x-auto whitespace-nowrap font-mono text-[10px] text-slate-400">
+                    ${eventsHtml}
+                  </div>
+                </div>
+                `;
+            }).join('');
+
+            return `
+            <div class="mt-3 bg-slate-950/50 border border-slate-800 rounded-xl overflow-hidden">
+                <div onclick="toggleAccordion('${monthId}')" class="w-full flex justify-between items-center p-3 cursor-pointer hover:bg-slate-800/50 transition no-select">
+                    <span class="font-bold text-slate-200 text-sm pointer-events-none">📅 ${monthData.label}</span>
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <span class="text-[10px] sm:text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full pointer-events-none">${sortedVersions.length} Version(s)</span>
+                        <button onclick="deleteMonth('${staffId}', '${monthData.label}', '${sessionIdsArray}', event)" class="text-slate-500 hover:text-red-400 hover:bg-red-900/20 px-1.5 py-0.5 rounded transition" title="Delete this entire month">🗑️</button>
+                        <span id="icon-${monthId}" class="text-slate-500 text-xs ml-1">▶</span>
+                    </div>
+                </div>
+                <div id="${monthId}" class="hidden p-3 pt-0 border-t border-slate-800">
+                    ${versionsHtml}
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        const totalUploads = Object.keys(staffSessions).length;
+        const staffContainerId = `staff-${staffId}`;
+        
+        const staffCard = document.createElement('div');
+        staffCard.className = "apple-glass rounded-2xl border border-slate-700/80 overflow-hidden shadow mb-3";
+        staffCard.innerHTML = `
+          <div onclick="toggleAccordion('${staffContainerId}')" class="w-full flex justify-between items-center p-4 cursor-pointer hover:bg-slate-800/50 transition no-select">
+            <h3 class="font-bold text-blue-400 text-base sm:text-lg flex items-center space-x-2 pointer-events-none">
+                <span>👤 Staff: ${staffId}</span>
+                <span class="text-[10px] sm:text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded-full font-semibold">${totalUploads} Upload(s)</span>
+            </h3>
+            <div class="flex items-center space-x-2">
+                <button onclick="deleteStaff('${staffId}', event)" class="text-slate-500 hover:text-red-400 hover:bg-red-900/20 p-1 rounded transition" title="Delete ALL rosters for this staff">🗑️</button>
+                <span id="icon-${staffContainerId}" class="text-slate-500 text-sm ml-1">▶</span>
+            </div>
+          </div>
+          <div id="${staffContainerId}" class="hidden p-4 pt-0 border-t border-slate-800/80 bg-slate-950/30">
+            ${monthHtml}
+          </div>
+        `;
+        container.appendChild(staffCard);
+      });
+    }
+
+    // Attach listeners
+    document.getElementById('btn-refresh-rosters').addEventListener('click', fetchRosters);
+    document.getElementById('btn-reset-rosters').addEventListener('click', resetAllRosters);
+    document.getElementById('search-rosters').addEventListener('input', renderRosters);
+    document.getElementById('filter-rosters-month').addEventListener('change', renderRosters);
+    document.getElementById('sort-rosters').addEventListener('change', renderRosters);
+
+    // Initial load
+    fetchCodes();
+    fetchRosters();
+  </script>
+</body>
+</html>
