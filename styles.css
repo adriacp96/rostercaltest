@@ -171,7 +171,8 @@ tr:hover {
 }
 
 /* ==========================================================================
-   MAGIC MODE: ZERO-FLASH TRANSPARENCY, BLUR BACKDROP & AVIATION HUD
+   MAGIC MODE: PURE-SVG ELECTRONIC FLIGHT BAG (EFB) HUD
+   Responsive across Phone, iPhone Duo (Closed & Open), Tablet & Desktop
    ========================================================================== */
 
 html.magic-transparent,
@@ -197,12 +198,12 @@ html.magic-mode #standard-ui-view {
   display: none !important;
 }
 
-/* Frosted Background Blur with Atmospheric High-Altitude Depth */
+/* Standalone Frosted Backdrop */
 .magic-backdrop {
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: radial-gradient(ellipse at 50% 8%, rgba(14, 165, 233, 0.22) 0%, rgba(2, 6, 23, 0.72) 55%, rgba(2, 6, 23, 0.88) 100%);
+  background: radial-gradient(ellipse at 50% 8%, rgba(14, 165, 233, 0.18) 0%, rgba(3, 7, 18, 0.72) 55%, rgba(2, 6, 23, 0.88) 100%);
   backdrop-filter: blur(22px) saturate(165%);
   -webkit-backdrop-filter: blur(22px) saturate(165%);
   overflow: hidden;
@@ -218,39 +219,40 @@ html.magic-mode #standard-ui-view {
   position: absolute;
   border-radius: 9999px;
   pointer-events: none;
-  filter: blur(90px);
-  opacity: 0.28;
+  filter: blur(95px);
+  opacity: 0.25;
 }
 
 .magic-atmo-glow-1 {
   width: clamp(220px, 42vw, 520px);
   height: clamp(220px, 42vw, 520px);
   background: radial-gradient(circle, rgba(56, 189, 248, 0.55) 0%, transparent 70%);
-  top: -12%;
+  top: -14%;
   left: -8%;
-  animation: atmoDrift 16s ease-in-out infinite alternate;
+  animation: atmoDrift 18s ease-in-out infinite alternate;
 }
 
 .magic-atmo-glow-2 {
   width: clamp(200px, 38vw, 480px);
   height: clamp(200px, 38vw, 480px);
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(229, 193, 123, 0.35) 0%, transparent 70%);
   bottom: -14%;
   right: -8%;
-  animation: atmoDrift 19s ease-in-out infinite alternate-reverse;
+  animation: atmoDrift 22s ease-in-out infinite alternate-reverse;
 }
 
 @keyframes atmoDrift {
   0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(28px, 22px, 0) scale(1.1); }
+  100% { transform: translate3d(26px, 20px, 0) scale(1.1); }
 }
 
-/* Fullscreen Scroll-Safe Viewport Container (100dvh + notch safe areas) */
+/* Fullscreen Safe-Area Viewport Shell */
 .magic-overlay-shell {
   position: fixed;
   inset: 0;
   z-index: 100;
   width: 100%;
+  height: 100vh;
   height: 100dvh;
   max-height: 100dvh;
   flex-direction: column;
@@ -260,33 +262,35 @@ html.magic-mode #standard-ui-view {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding:
-    max(14px, env(safe-area-inset-top))
-    max(14px, env(safe-area-inset-right))
-    max(18px, env(safe-area-inset-bottom))
-    max(14px, env(safe-area-inset-left));
+    max(56px, calc(env(safe-area-inset-top) + 46px))
+    max(12px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
 }
 
-/* Cockpit Glass Card */
-.magic-cockpit-card {
+/* Main EFB Glass Chassis */
+.magic-efb-card {
   position: relative;
   margin: auto;
   width: 100%;
-  max-width: 640px;
-  border-radius: 26px;
-  padding: clamp(16px, 3.2vw, 28px);
-  background: linear-gradient(165deg, rgba(15, 23, 42, 0.78) 0%, rgba(7, 13, 28, 0.88) 100%);
-  backdrop-filter: blur(26px) saturate(185%);
-  -webkit-backdrop-filter: blur(26px) saturate(185%);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  max-width: 460px;
+  border-radius: 28px;
+  padding: clamp(16px, 3.2vw, 24px);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+    linear-gradient(165deg, rgba(10, 16, 30, 0.84) 0%, rgba(5, 9, 20, 0.92) 100%);
+  backdrop-filter: blur(28px) saturate(185%);
+  -webkit-backdrop-filter: blur(28px) saturate(185%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow:
-    0 28px 75px -16px rgba(0, 0, 0, 0.72),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 1px 0 rgba(255, 255, 255, 0.16) inset;
+    0 32px 80px -18px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.14) inset;
   overflow: hidden;
-  animation: cockpitLiftIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: efbCardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes cockpitLiftIn {
+@keyframes efbCardIn {
   0% {
     opacity: 0;
     transform: translateY(18px) scale(0.965);
@@ -300,40 +304,75 @@ html.magic-mode #standard-ui-view {
 .magic-rim-glow {
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 10%;
+  right: 10%;
   height: 1.5px;
-  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.85) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.75) 38%, rgba(229, 193, 123, 0.85) 62%, transparent 100%);
   pointer-events: none;
 }
 
-/* Top Instrument Strip */
-.magic-header-strip {
+.magic-grid-texture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.7) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.7) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 50% 25%, #000 10%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 25%, #000 10%, transparent 78%);
+}
+
+/* Top Avionics Status Bar */
+.magic-topbar {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: clamp(10px, 2vw, 14px);
+  gap: 10px;
+  padding-bottom: clamp(12px, 2.2vw, 16px);
+  margin-bottom: clamp(12px, 2.4vw, 18px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.magic-brand-group {
+.magic-brand-lockup {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
 }
 
-.magic-brand-icon {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
+.magic-brand-svg {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.magic-brand-copy {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
 }
 
 .magic-brand-name {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.2em;
-  color: rgba(203, 213, 225, 0.9);
+  color: #f8fafc;
+  line-height: 1.15;
+}
+
+.magic-brand-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(229, 193, 123, 0.8);
+  line-height: 1.25;
 }
 
 .magic-status-pill {
@@ -343,25 +382,27 @@ html.magic-mode #standard-ui-view {
   padding: 5px 11px;
   border-radius: 9999px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
+  white-space: nowrap;
+  flex-shrink: 0;
   color: #fde68a;
-  background: rgba(120, 53, 15, 0.38);
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(120, 53, 15, 0.36);
+  border: 1px solid rgba(251, 191, 36, 0.32);
   transition: color 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
 }
 
 .magic-status-pill.is-ready {
   color: #6ee7b7;
   background: rgba(6, 78, 59, 0.42);
-  border-color: rgba(52, 211, 153, 0.42);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .magic-status-pill.is-error {
   color: #fca5a5;
   background: rgba(127, 29, 29, 0.42);
-  border-color: rgba(248, 113, 113, 0.42);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 .magic-beacon-dot {
@@ -385,61 +426,73 @@ html.magic-mode #standard-ui-view {
 }
 
 @keyframes transponderPulse {
-  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  0%, 100% { transform: scale(0.88); opacity: 0.7; }
   50% { transform: scale(1.25); opacity: 1; }
 }
 
-/* Aviation Radar & Great-Circle Flight Stage */
-.magic-aviation-stage {
+/* Adaptive EFB Grid Layout */
+.magic-efb-layout {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(14px, 3vw, 20px);
+  align-items: center;
+}
+
+.magic-pane-flight,
+.magic-pane-telemetry {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Panoramic Pure-SVG Navigation Display Viewport */
+.magic-nd-viewport {
   position: relative;
   width: 100%;
-  height: clamp(92px, 19vw, 128px);
-  border-radius: 18px;
-  margin-bottom: clamp(12px, 2.4vw, 18px);
-  background: radial-gradient(ellipse at 50% 100%, rgba(14, 165, 233, 0.16) 0%, rgba(2, 6, 23, 0.55) 75%);
-  border: 1px solid rgba(56, 189, 248, 0.16);
-  box-shadow: inset 0 0 32px rgba(2, 6, 23, 0.75);
+  aspect-ratio: 460 / 184;
+  min-height: 118px;
+  max-height: 210px;
+  border-radius: 20px;
+  margin-bottom: clamp(12px, 2.4vw, 16px);
+  background:
+    radial-gradient(ellipse at 50% 108%, rgba(14, 165, 233, 0.18) 0%, rgba(2, 6, 23, 0.72) 72%);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  box-shadow:
+    inset 0 0 36px rgba(2, 6, 23, 0.85),
+    0 12px 28px -14px rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-/* Subtle ATC Radar Rings & Rotating Sweep */
-.magic-radar-disc {
+/* Rotating ATC Radar Cone anchored at bottom-center of ND */
+.magic-nd-radar-wrap {
   position: absolute;
-  width: 240px;
-  height: 240px;
-  bottom: -115px;
+  width: 290px;
+  height: 290px;
+  bottom: -145px;
   left: 50%;
   transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.magic-radar-ring {
-  position: absolute;
-  inset: 0;
-  margin: auto;
   border-radius: 9999px;
-  border: 1px solid rgba(56, 189, 248, 0.12);
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.magic-radar-ring.ring-1 { width: 100%; height: 100%; }
-.magic-radar-ring.ring-2 { width: 68%; height: 68%; }
-.magic-radar-ring.ring-3 { width: 38%; height: 38%; }
-
-.magic-radar-sweep-cone {
+.magic-nd-sweep {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
   background: conic-gradient(
     from 0deg,
     rgba(56, 189, 248, 0) 0deg,
-    rgba(56, 189, 248, 0) 295deg,
-    rgba(56, 189, 248, 0.24) 356deg,
-    rgba(125, 211, 252, 0.55) 360deg
+    rgba(56, 189, 248, 0) 300deg,
+    rgba(56, 189, 248, 0.2) 355deg,
+    rgba(125, 211, 252, 0.5) 360deg
   );
-  animation: radarSweepRotate 5.5s linear infinite;
+  animation: radarSweepRotate 6s linear infinite;
 }
 
 @keyframes radarSweepRotate {
@@ -447,55 +500,55 @@ html.magic-mode #standard-ui-view {
   to { transform: rotate(360deg); }
 }
 
-/* Soft High-Altitude Cloud Wisps */
-.magic-cloud-layer {
+/* Drifting High-Altitude Jetstream Wisps */
+.magic-jetstream-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
 }
 
-.magic-cloud {
+.magic-wisp {
   position: absolute;
-  height: 14px;
+  height: 10px;
   border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.14), transparent);
+  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.13), transparent);
   filter: blur(4px);
-  animation: cloudGlide linear infinite;
+  animation: jetstreamDrift linear infinite;
 }
 
-.magic-cloud.cloud-1 { width: 110px; top: 24%; left: 100%; animation-duration: 13s; }
-.magic-cloud.cloud-2 { width: 85px; top: 52%; left: 100%; animation-duration: 18s; animation-delay: -6s; opacity: 0.75; }
-.magic-cloud.cloud-3 { width: 130px; top: 72%; left: 100%; animation-duration: 22s; animation-delay: -11s; opacity: 0.55; }
+.magic-wisp.wisp-1 { width: 120px; top: 28%; left: 100%; animation-duration: 14s; }
+.magic-wisp.wisp-2 { width: 90px; top: 54%; left: 100%; animation-duration: 19s; animation-delay: -7s; opacity: 0.7; }
+.magic-wisp.wisp-3 { width: 140px; top: 76%; left: 100%; animation-duration: 24s; animation-delay: -13s; opacity: 0.5; }
 
-@keyframes cloudGlide {
+@keyframes jetstreamDrift {
   from { transform: translateX(20px); }
-  to { transform: translateX(-760px); }
+  to { transform: translateX(-680px); }
 }
 
-.magic-flight-svg {
+.magic-nd-svg {
   position: relative;
   z-index: 2;
   width: 100%;
   height: 100%;
-  max-width: 480px;
+  display: block;
 }
 
-/* Contrail Synchronized with Aircraft Flight Cycle */
+/* Synchronized Contrail Sweep */
 .magic-contrail-line {
-  stroke-dasharray: 28 100;
-  stroke-dashoffset: 28;
-  animation: contrailSweep 5.2s cubic-bezier(0.38, 0, 0.62, 1) infinite;
+  stroke-dasharray: 26 100;
+  stroke-dashoffset: 26;
+  animation: contrailSweep 5.6s cubic-bezier(0.36, 0, 0.64, 1) infinite;
 }
 
 @keyframes contrailSweep {
-  0% { stroke-dashoffset: 28; opacity: 0; }
+  0% { stroke-dashoffset: 26; opacity: 0; }
   12% { opacity: 0.95; }
-  85% { opacity: 0.9; }
+  84% { opacity: 0.92; }
   100% { stroke-dashoffset: -100; opacity: 0; }
 }
 
-/* Airport Hub Sonar Pulse */
+/* Hub Waypoint Sonar Pulse */
 .magic-hub-pulse {
   transform-origin: center;
   transform-box: fill-box;
@@ -508,10 +561,10 @@ html.magic-mode #standard-ui-view {
 
 @keyframes hubSonar {
   0% { transform: scale(0.35); opacity: 0.85; }
-  100% { transform: scale(1.65); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
 }
 
-/* Aircraft Anti-Collision Double-Flash Strobe */
+/* Realistic Double-Flash Anti-Collision Aircraft Strobe */
 .magic-strobe-light {
   animation: aircraftStrobe 1.8s linear infinite;
 }
@@ -524,19 +577,18 @@ html.magic-mode #standard-ui-view {
   28% { opacity: 0.15; }
 }
 
-/* Headline & Subtitle */
+/* Title & Month Identity */
 .magic-title-block {
   text-align: center;
-  margin-bottom: clamp(14px, 2.8vw, 22px);
 }
 
 .magic-headline {
-  font-size: clamp(1.3rem, 4.4vw, 1.95rem);
+  font-size: clamp(1.25rem, 4.2vw, 1.8rem);
   font-weight: 800;
-  letter-spacing: -0.025em !important;
+  letter-spacing: -0.03em !important;
   line-height: 1.1 !important;
   color: #f8fafc;
-  background: linear-gradient(180deg, #ffffff 0%, #bae6fd 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 70%, #93c5fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 6px 0;
@@ -552,52 +604,121 @@ html.magic-mode #standard-ui-view {
   margin: 0;
 }
 
-/* Telemetry Stats Grid */
+/* Live Destinations Chip Strip */
+.magic-route-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.magic-route-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #e2e8f0;
+}
+
+.magic-route-chip svg {
+  width: 10px;
+  height: 10px;
+  color: #e5c17b;
+  flex-shrink: 0;
+}
+
+.magic-route-chip.is-more {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(14, 165, 233, 0.12);
+}
+
+/* Telemetry Section Kicker (Visible in 2-col EFB mode) */
+.magic-section-kicker {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #94a3b8;
+}
+
+.magic-kicker-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.28), transparent);
+}
+
+/* Precision Telemetry Stats Grid */
 .magic-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(8px, 2vw, 12px);
+  gap: clamp(8px, 2vw, 10px);
   width: 100%;
-  margin-bottom: clamp(16px, 3vw, 22px);
-}
-
-@media (min-width: 520px) {
-  .magic-stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  margin-bottom: clamp(14px, 2.8vw, 18px);
 }
 
 .magic-stat-card {
   position: relative;
   border-radius: 16px;
-  padding: clamp(10px, 2.2vw, 14px) clamp(10px, 2.4vw, 16px);
-  background: rgba(15, 23, 42, 0.62);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  padding: clamp(10px, 2.2vw, 13px) clamp(11px, 2.4vw, 14px);
+  background: rgba(15, 23, 42, 0.58);
+  border: 1px solid rgba(148, 163, 184, 0.13);
   box-shadow:
-    0 8px 20px -8px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 10px 24px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   overflow: hidden;
   transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease;
 }
 
+.magic-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  opacity: 0.45;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.5), transparent);
+}
+
+.magic-stat-card[data-accent="sky"]::before { background: linear-gradient(90deg, transparent, #38bdf8, transparent); }
+.magic-stat-card[data-accent="gold"]::before { background: linear-gradient(90deg, transparent, #e5c17b, transparent); }
+.magic-stat-card[data-accent="indigo"]::before { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
+.magic-stat-card[data-accent="cyan"]::before { background: linear-gradient(90deg, transparent, #22d3ee, transparent); }
+.magic-stat-card[data-accent="emerald"]::before { background: linear-gradient(90deg, transparent, #34d399, transparent); }
+.magic-stat-card[data-accent="violet"]::before { background: linear-gradient(90deg, transparent, #a78bfa, transparent); }
+
 .magic-stat-card:hover {
   transform: translateY(-2px);
-  background: rgba(30, 41, 59, 0.66);
-  border-color: rgba(125, 211, 252, 0.3);
+  background: rgba(24, 35, 58, 0.72);
+  border-color: rgba(148, 163, 184, 0.28);
 }
 
 .magic-stat-card.is-loading::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 30%, rgba(148, 163, 184, 0.1) 50%, transparent 70%);
+  background: linear-gradient(105deg, transparent 30%, rgba(148, 163, 184, 0.11) 50%, transparent 70%);
   transform: translateX(-100%);
-  animation: statSkeletonSweep 1.8s ease-in-out infinite;
+  animation: statSkeletonSweep 1.7s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -608,37 +729,53 @@ html.magic-mode #standard-ui-view {
 .magic-stat-top {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
 }
 
-.magic-stat-icon {
-  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
-  line-height: 1;
+.magic-stat-icon-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.magic-stat-icon-box svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .magic-stat-label {
-  font-size: clamp(0.62rem, 1.7vw, 0.7rem);
+  font-size: clamp(0.6rem, 1.65vw, 0.68rem);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .magic-stat-value {
-  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
+  font-size: clamp(1.22rem, 3.8vw, 1.6rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
-/* Actions Footer */
+/* Actions Block */
 .magic-actions-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -646,14 +783,14 @@ html.magic-mode #standard-ui-view {
   position: relative;
   width: 100%;
   min-height: 50px;
-  padding: 13px 22px;
+  padding: 13px 20px;
   border-radius: 16px;
   border: 1px solid rgba(125, 211, 252, 0.45);
   background: linear-gradient(135deg, #0284c7 0%, #2563eb 55%, #1d4ed8 100%);
   color: #ffffff;
   font-weight: 700;
-  font-size: clamp(0.8rem, 2.5vw, 0.95rem);
-  letter-spacing: 0.03em;
+  font-size: clamp(0.78rem, 2.2vw, 0.9rem);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -707,74 +844,251 @@ html.magic-mode #standard-ui-view {
 }
 
 .magic-cta-icon {
-  font-size: 1.15em;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.magic-cta-icon svg {
+  width: 19px;
+  height: 19px;
+  display: block;
+}
+
+.magic-cta-btn .icon-check {
+  display: none;
+}
+
+.magic-cta-btn.is-exported .icon-download {
+  display: none;
+}
+
+.magic-cta-btn.is-exported .icon-check {
+  display: block;
 }
 
 .magic-review-btn {
+  width: 100%;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  background: rgba(15, 23, 42, 0.45);
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 13px;
+  background: rgba(15, 23, 42, 0.48);
   border: 1px solid rgba(148, 163, 184, 0.16);
-  color: #94a3b8;
-  font-size: clamp(0.7rem, 2vw, 0.78rem);
+  color: #cbd5e1;
+  font-size: clamp(0.72rem, 2vw, 0.8rem);
   font-weight: 500;
   cursor: pointer;
 }
 
 .magic-review-btn:hover {
-  color: #f8fafc;
-  background: rgba(30, 41, 59, 0.72);
-  border-color: rgba(148, 163, 184, 0.35);
+  color: #ffffff;
+  background: rgba(30, 41, 59, 0.74);
+  border-color: rgba(148, 163, 184, 0.34);
 }
 
-/* Staggered Entrance Elegance for Magic Mode */
+.magic-review-svg,
+.magic-review-arrow {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   1) iPhone Duo OPEN / Foldables / Tablets / Desktop (>= 680px wide)
+   2) Compact Landscape Phones (short height <= 520px & wide >= 540px)
+   3) Ultra-narrow screens (<= 360px, e.g. narrow cover screens)
+   ========================================================================== */
+
+/* Unfolded iPhone Duo / Foldable / Tablet / Desktop: Dual-Pane EFB Cockpit */
+@media (min-width: 680px) {
+  .magic-overlay-shell {
+    padding:
+      max(58px, calc(env(safe-area-inset-top) + 46px))
+      max(20px, env(safe-area-inset-right))
+      max(22px, env(safe-area-inset-bottom))
+      max(20px, env(safe-area-inset-left));
+  }
+
+  .magic-efb-card {
+    max-width: min(880px, 94vw);
+    padding: clamp(20px, 2.8vw, 28px);
+    border-radius: 30px;
+  }
+
+  .magic-efb-layout {
+    grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+    /* Wide center gutter keeps content cleanly away from foldable central creases */
+    gap: clamp(22px, 3.6vw, 34px);
+    align-items: stretch;
+  }
+
+  .magic-pane-flight {
+    justify-content: center;
+  }
+
+  .magic-pane-telemetry {
+    justify-content: space-between;
+  }
+
+  .magic-title-block {
+    text-align: left;
+  }
+
+  .magic-route-chips {
+    justify-content: flex-start;
+  }
+
+  .magic-section-kicker {
+    display: flex;
+  }
+
+  .magic-stats-grid {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .magic-nd-viewport {
+    max-height: 220px;
+  }
+}
+
+/* Short Landscape Mobile Screens */
+@media (max-height: 520px) and (min-width: 540px) {
+  .magic-overlay-shell {
+    padding:
+      max(12px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  .magic-efb-card {
+    max-width: min(820px, 94vw);
+    padding: 14px 18px;
+    border-radius: 22px;
+  }
+
+  .magic-topbar {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  .magic-efb-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+  }
+
+  .magic-nd-viewport {
+    min-height: 92px;
+    max-height: 122px;
+    margin-bottom: 8px;
+  }
+
+  .magic-title-block {
+    text-align: left;
+  }
+
+  .magic-route-chips {
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+
+  .magic-section-kicker {
+    display: none;
+  }
+
+  .magic-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .magic-stat-card {
+    padding: 7px 9px;
+    gap: 4px;
+    border-radius: 12px;
+  }
+
+  .magic-stat-icon-box {
+    width: 19px;
+    height: 19px;
+  }
+
+  .magic-stat-icon-box svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .magic-stat-value {
+    font-size: 1.05rem;
+  }
+
+  .magic-cta-btn {
+    min-height: 40px;
+    padding: 9px 14px;
+    border-radius: 12px;
+  }
+
+  .magic-review-btn {
+    min-height: 34px;
+    padding: 6px 12px;
+  }
+}
+
+/* Narrow Cover Screens (<= 360px, e.g. compact closed foldables) */
+@media (max-width: 360px) {
+  .magic-efb-card {
+    padding: 14px 12px;
+    border-radius: 22px;
+  }
+
+  .magic-brand-tag {
+    display: none;
+  }
+
+  .magic-status-pill {
+    padding: 4px 8px;
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+  }
+
+  .magic-stat-card {
+    padding: 9px 10px;
+    gap: 6px;
+  }
+
+  .magic-stat-value {
+    font-size: 1.15rem;
+  }
+}
+
+/* Staggered Entrance Elegance */
 .magic-item {
   opacity: 0;
   animation: dominoCascade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.delay-100 { animation-delay: 80ms; }
-.delay-150 { animation-delay: 140ms; }
-.delay-200 { animation-delay: 200ms; }
+.delay-100 { animation-delay: 70ms; }
+.delay-150 { animation-delay: 120ms; }
+.delay-200 { animation-delay: 170ms; }
+.delay-250 { animation-delay: 220ms; }
 .delay-300 { animation-delay: 260ms; }
-.delay-350 { animation-delay: 310ms; }
-.delay-400 { animation-delay: 360ms; }
-.delay-450 { animation-delay: 410ms; }
-.delay-500 { animation-delay: 460ms; }
-.delay-550 { animation-delay: 510ms; }
-.delay-600 { animation-delay: 560ms; }
-
-/* Compact height adjustment for short mobile landscape screens */
-@media (max-height: 620px) {
-  .magic-cockpit-card {
-    padding: 14px 18px;
-    border-radius: 20px;
-  }
-  .magic-aviation-stage {
-    height: 82px;
-    margin-bottom: 10px;
-  }
-  .magic-title-block {
-    margin-bottom: 10px;
-  }
-  .magic-stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .magic-stat-card {
-    padding: 8px 10px;
-    gap: 3px;
-  }
-  .magic-cta-btn {
-    min-height: 44px;
-    padding: 10px 16px;
-  }
-}
+.delay-350 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 340ms; }
+.delay-450 { animation-delay: 380ms; }
+.delay-500 { animation-delay: 420ms; }
+.delay-550 { animation-delay: 460ms; }
+.delay-600 { animation-delay: 500ms; }
 
 /*
  * Accessibility: Reduced Motion
@@ -782,7 +1096,7 @@ html.magic-mode #standard-ui-view {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .magic-item,
-  .magic-cockpit-card,
+  .magic-efb-card,
   .magic-backdrop {
     animation: none !important;
     transition: opacity 200ms ease !important;
@@ -791,8 +1105,8 @@ html.magic-mode #standard-ui-view {
   }
   body::before,
   body::after,
-  .magic-radar-sweep-cone,
-  .magic-cloud,
+  .magic-nd-sweep,
+  .magic-wisp,
   .magic-contrail-line,
   .magic-hub-pulse,
   .magic-strobe-light,
@@ -819,8 +1133,8 @@ html.magic-mode #standard-ui-view {
   .backdrop-blur-sm,
   .backdrop-blur-xl,
   .magic-backdrop,
-  .magic-cockpit-card {
-    background: #0f172a !important;
+  .magic-efb-card {
+    background: #0b1120 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
