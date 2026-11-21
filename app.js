@@ -141,7 +141,7 @@ class Toast {
     if (!container) {
       container = document.createElement('div');
       container.id = containerId;
-      container.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col items-center space-y-2 pointer-events-none';
+      container.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[150] flex flex-col items-center space-y-2 pointer-events-none';
       document.body.appendChild(container);
     }
 
@@ -1033,40 +1033,64 @@ document.addEventListener("DOMContentLoaded", () => {
   const standardUiView = document.getElementById('standard-ui-view');
   const magicModeView = document.getElementById('magic-mode-view');
   const magicBtnExport = document.getElementById('magic-btn-export');
+  const magicBtnExportIcon = document.getElementById('magic-btn-export-icon');
+  const magicBtnExportLabel = document.getElementById('magic-btn-export-label');
   const magicBtnReview = document.getElementById('magic-btn-review');
   const magicBgBlur = document.getElementById('magic-bg-blur');
+  const magicStatusPill = document.getElementById('magic-status-pill');
+  const magicStatusText = document.getElementById('magic-status-text');
+  const magicMainTitle = document.getElementById('magic-main-title');
 
   if (isMagicMode && standardUiView && magicModeView) {
     standardUiView.classList.add('hidden');
     magicModeView.classList.remove('hidden');
     magicModeView.classList.add('flex');
     if (magicBgBlur) magicBgBlur.classList.remove('hidden');
-    
-    document.documentElement.classList.add('magic-transparent');
+
+    document.documentElement.classList.add('magic-mode', 'magic-transparent');
     document.body.classList.add('magic-transparent');
   }
 
+  function processIncomingRoster(rawText) {
+    try {
+      state.parsedEvents = ParserEngine.parseRawText(rawText);
+      updateFilterCounts();
+      renderActiveView();
+
+      if (btnExport) btnExport.disabled = state.parsedEvents.length === 0;
+      if (eventCount) eventCount.innerText = `${state.parsedEvents.length} EK events ready for calendar sync`;
+      if (rawInput) rawInput.value = rawText;
+
+      if (isMagicMode) {
+        updateMagicStatistics();
+      }
+    } catch (err) {
+      console.error("Magic mode parsing error:", err);
+      if (isMagicMode) {
+        if (magicStatusPill) {
+          magicStatusPill.classList.remove('is-ready');
+          magicStatusPill.classList.add('is-error');
+        }
+        if (magicStatusText) magicStatusText.innerText = 'PARSE WARNING';
+        if (magicMainTitle) magicMainTitle.innerText = 'Manual Review Needed';
+      }
+      Toast.show("Failed to instantly parse roster. Please review manually.", "error");
+    }
+  }
+
+  window.__ROSTER_LISTENER_READY__ = true;
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'ROSTER_DATA') {
-      const rawText = event.data.text;
-      try {
-        state.parsedEvents = ParserEngine.parseRawText(rawText);
-        updateFilterCounts();
-        renderActiveView();
-        
-        if (btnExport) btnExport.disabled = state.parsedEvents.length === 0;
-        
-        if (isMagicMode) {
-          updateMagicStatistics();
-        } else {
-          if (rawInput) rawInput.value = rawText; 
-        }
-      } catch (err) {
-        console.error("Magic mode parsing error:", err);
-        Toast.show("Failed to instantly parse roster. Please review manually.", "error");
-      }
+      processIncomingRoster(event.data.text);
     }
   });
+
+  // Process any ROSTER_DATA message that arrived before DOMContentLoaded
+  if (window.__PENDING_ROSTER_DATA__) {
+    const bufferedRoster = window.__PENDING_ROSTER_DATA__;
+    delete window.__PENDING_ROSTER_DATA__;
+    processIncomingRoster(bufferedRoster);
+  }
 
   function updateMagicStatistics() {
     let flightCount = 0;
@@ -1078,6 +1102,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const monthNamesLong = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const monthTitle = document.getElementById('magic-month-title');
+
+    document.querySelectorAll('.magic-stat-card.is-loading').forEach(card => {
+      card.classList.remove('is-loading');
+    });
+
+    if (totalEvents === 0) {
+      if (magicStatusPill) {
+        magicStatusPill.classList.remove('is-ready');
+        magicStatusPill.classList.add('is-error');
+      }
+      if (magicStatusText) magicStatusText.innerText = 'NO EVENTS DETECTED';
+      if (magicMainTitle) magicMainTitle.innerText = 'Roster Not Detected';
+      if (monthTitle) monthTitle.innerText = 'Open Print/Email view & try again';
+      if (magicBtnExport) magicBtnExport.disabled = true;
+      if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'No Events to Export';
+      return;
+    }
+
+    if (magicStatusPill) {
+      magicStatusPill.classList.remove('is-error');
+      magicStatusPill.classList.add('is-ready');
+    }
+    if (magicStatusText) magicStatusText.innerText = 'FLIGHT PLAN READY';
+    if (magicMainTitle) magicMainTitle.innerText = 'Cleared for Calendar Sync';
     if (monthTitle) monthTitle.innerText = `${monthNamesLong[state.currentMonth]} ${state.currentYear} Roster`;
 
     state.parsedEvents.forEach(evt => {
@@ -1096,11 +1144,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const blockHours = Math.floor(totalMs / (1000 * 60 * 60));
-    
-    const animateValue = (id, endValue, suffix = '', duration = 1200, delayMs = 0) => {
+
+    const animateValue = (id, endValue, suffix = '', duration = 950, delayMs = 0) => {
       const obj = document.getElementById(id);
       if (!obj) return;
-      
+
       obj.innerText = "0" + suffix;
 
       setTimeout(() => {
@@ -1112,32 +1160,50 @@ document.addEventListener("DOMContentLoaded", () => {
           obj.innerText = Math.floor(easeProgress * endValue) + suffix;
           if (progress < 1) {
             window.requestAnimationFrame(step);
+          } else {
+            obj.innerText = endValue + suffix;
           }
         };
         window.requestAnimationFrame(step);
       }, delayMs);
     };
 
-    animateValue('stat-flights', flightCount, '', 1200, 800);
-    animateValue('stat-hours', blockHours, 'h', 1200, 900);
-    animateValue('stat-layovers', layoverCount, '', 1200, 1000);
-    animateValue('stat-turnarounds', turnaroundCount, '', 1200, 1100);
-    animateValue('stat-off', offCount, '', 1200, 1200);
-    animateValue('stat-events', totalEvents, '', 1200, 1300);
+    animateValue('stat-flights', flightCount, '', 900, 120);
+    animateValue('stat-hours', blockHours, 'h', 950, 180);
+    animateValue('stat-layovers', layoverCount, '', 900, 240);
+    animateValue('stat-turnarounds', turnaroundCount, '', 900, 300);
+    animateValue('stat-off', offCount, '', 900, 360);
+    animateValue('stat-events', totalEvents, '', 1000, 420);
 
     if (magicBtnExport) {
-      magicBtnExport.disabled = state.parsedEvents.length === 0;
+      magicBtnExport.disabled = false;
+      magicBtnExport.classList.remove('is-exported');
     }
+    if (magicBtnExportIcon) magicBtnExportIcon.innerText = '📥';
+    if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Download .ics Calendar';
   }
 
   if (magicBtnExport) {
     magicBtnExport.addEventListener('click', () => {
-      if (btnExport) btnExport.click(); 
+      if (btnExport) btnExport.click();
+      magicBtnExport.classList.add('is-exported');
+      if (magicBtnExportIcon) magicBtnExportIcon.innerText = '✅';
+      if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Calendar Exported';
+
+      setTimeout(() => {
+        magicBtnExport.classList.remove('is-exported');
+        if (magicBtnExportIcon) magicBtnExportIcon.innerText = '📥';
+        if (magicBtnExportLabel) magicBtnExportLabel.innerText = 'Download .ics Calendar';
+      }, 2800);
     });
   }
 
   if (magicBtnReview) {
     magicBtnReview.addEventListener('click', () => {
+      document.documentElement.classList.remove('magic-mode', 'magic-transparent');
+      document.body.classList.remove('magic-transparent');
+
+      if (magicBgBlur) magicBgBlur.classList.add('hidden');
       if (magicModeView) {
         magicModeView.classList.remove('flex');
         magicModeView.classList.add('hidden');
@@ -1145,7 +1211,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (standardUiView) {
         standardUiView.classList.remove('hidden');
       }
-      
+
       const leftCol = document.querySelector('.lg\\:col-span-5');
       const rightCol = document.querySelector('.lg\\:col-span-7');
       if (leftCol) leftCol.classList.add('hidden');
@@ -1224,7 +1290,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const prefReportTime = document.getElementById("pref-report-time");
   const prefFR24 = document.getElementById("pref-fr24-link");
   const prefAutoLayovers = document.getElementById("pref-auto-layovers");
-  const prefAlarmReminder = document.getElementById("pref-alarm-reminder"); // New Reminder Input
+  const prefAlarmReminder = document.getElementById("pref-alarm-reminder");
+  const previewFlight = document.getElementById("preview-flight-format");
+  const previewDuty = document.getElementById("preview-duty-format");
 
   // Sync UI on load with Saved Preferences
   if (prefCalName) prefCalName.value = state.preferences.calendarName;
@@ -1275,7 +1343,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (prefAutoLayovers) prefAutoLayovers.value = "true";
       if (prefFlightTitle) prefFlightTitle.value = "CITY_IATA";
       if (prefDutyTitle) prefDutyTitle.value = "EMOJI_TITLE";
-      if (prefAlarmReminder) prefAlarmReminder.value = "120"; // Default to 2 hours
+      if (prefAlarmReminder) prefAlarmReminder.value = "120";
       updateModalPreviews();
     });
   }
