@@ -1,5 +1,5 @@
-/* 
- * Apple Design typography scale and system fonts[cite: 9]
+/*
+ * Apple Design typography scale and system fonts
  */
 :root {
   font: 100%/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -72,16 +72,16 @@ body::after {
   100% { transform: translate(-40px, 50px) scale(0.9); }
 }
 
-/* Response: Kill Latency, Active State on Pointer Down[cite: 9] */
+/* Response: Kill Latency, Active State on Pointer Down */
 button, .btn, a, label {
-  transition: transform 100ms ease-out, background-color 200ms ease, opacity 200ms ease, border-color 200ms ease !important;
+  transition: transform 100ms ease-out, background-color 200ms ease, opacity 200ms ease, border-color 200ms ease, box-shadow 200ms ease !important;
 }
 
 button:active, .btn:active, a:active {
   transform: scale(0.97) !important;
 }
 
-/* Apple Materials & Translucency[cite: 9] */
+/* Apple Materials & Translucency */
 .apple-glass {
   background: rgba(15, 23, 42, 0.6) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
@@ -90,7 +90,7 @@ button:active, .btn:active, a:active {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Apple typography tracking adjustments for larger sizes[cite: 9] */
+/* Apple typography tracking adjustments for larger sizes */
 h1, h2, h3, .text-xl, .text-2xl, .text-3xl, .text-4xl, .tracking-tight {
   letter-spacing: -0.02em !important;
   line-height: 1.05 !important;
@@ -104,11 +104,11 @@ tr:hover {
   background-color: rgba(30, 41, 59, 0.6);
 }
 
-/* Spring-like bezier curve for reversible transitions[cite: 9] */
+/* Spring-like bezier curve for reversible transitions */
 @keyframes dominoCascade {
   0% {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(14px) scale(0.975);
   }
   100% {
     opacity: 1;
@@ -118,7 +118,7 @@ tr:hover {
 
 .animate-fade-in {
   opacity: 0;
-  animation: dominoCascade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+  animation: dominoCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes emeraldGradientShift {
@@ -170,87 +170,638 @@ tr:hover {
   opacity: 0.3;
 }
 
-/* Aviation Magic Mode Animations */
-@keyframes radar-sweep {
-  0% { transform: rotate(0deg); opacity: 0.1; }
-  50% { opacity: 0.4; }
-  100% { transform: rotate(360deg); opacity: 0.1; }
-}
+/* ==========================================================================
+   MAGIC MODE: ZERO-FLASH TRANSPARENCY, BLUR BACKDROP & AVIATION HUD
+   ========================================================================== */
 
-.animate-radar-sweep {
-  animation: radar-sweep 4s linear infinite;
-  transform-origin: center center;
-}
-
-@keyframes takeoff {
-  0% { 
-    transform: translate(-120px, 30px) rotate(10deg) scale(0.6); 
-    opacity: 0; 
-  }
-  20% { 
-    opacity: 1; 
-  }
-  80% { 
-    opacity: 1; 
-  }
-  100% { 
-    transform: translate(120px, -40px) rotate(25deg) scale(1.4); 
-    opacity: 0; 
-  }
-}
-
-.animate-takeoff {
-  animation: takeoff 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-/* Magic Mode Transparent Overlay Classes */
-html.magic-transparent, 
-body.magic-transparent {
+html.magic-transparent,
+body.magic-transparent,
+html.magic-mode,
+html.magic-mode body {
   background-color: transparent !important;
   background: transparent !important;
 }
 
-body.magic-transparent::before, 
-body.magic-transparent::after {
-  display: none !important; /* Hides the floating background orbs in overlay mode */
-}
-
-/* Hide header and footer in magic mode to ensure only the overlay is visible */
-body.magic-transparent header,
-body.magic-transparent footer {
+body.magic-transparent::before,
+body.magic-transparent::after,
+html.magic-mode body::before,
+html.magic-mode body::after {
   display: none !important;
 }
 
-/* Staggered Elegance for Magic Mode */
-.magic-item {
-  opacity: 0;
-  animation: dominoCascade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+body.magic-transparent header,
+body.magic-transparent footer,
+html.magic-mode header,
+html.magic-mode footer,
+html.magic-mode #standard-ui-view {
+  display: none !important;
 }
 
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-600 { animation-delay: 600ms; }
-.delay-700 { animation-delay: 700ms; }
-.delay-800 { animation-delay: 800ms; }
-.delay-900 { animation-delay: 900ms; }
-.delay-1000 { animation-delay: 1000ms; }
+/* Frosted Background Blur with Atmospheric High-Altitude Depth */
+.magic-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: radial-gradient(ellipse at 50% 8%, rgba(14, 165, 233, 0.22) 0%, rgba(2, 6, 23, 0.72) 55%, rgba(2, 6, 23, 0.88) 100%);
+  backdrop-filter: blur(22px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+  overflow: hidden;
+  animation: magicBackdropIn 0.45s ease-out forwards;
+}
 
-/* 
- * Accessibility: Reduced Motion[cite: 9] 
- * Use simple opacity transitions instead of springs/transforms.
+@keyframes magicBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.magic-atmo-glow {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.28;
+}
+
+.magic-atmo-glow-1 {
+  width: clamp(220px, 42vw, 520px);
+  height: clamp(220px, 42vw, 520px);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.55) 0%, transparent 70%);
+  top: -12%;
+  left: -8%;
+  animation: atmoDrift 16s ease-in-out infinite alternate;
+}
+
+.magic-atmo-glow-2 {
+  width: clamp(200px, 38vw, 480px);
+  height: clamp(200px, 38vw, 480px);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, transparent 70%);
+  bottom: -14%;
+  right: -8%;
+  animation: atmoDrift 19s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes atmoDrift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(28px, 22px, 0) scale(1.1); }
+}
+
+/* Fullscreen Scroll-Safe Viewport Container (100dvh + notch safe areas) */
+.magic-overlay-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding:
+    max(14px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+}
+
+/* Cockpit Glass Card */
+.magic-cockpit-card {
+  position: relative;
+  margin: auto;
+  width: 100%;
+  max-width: 640px;
+  border-radius: 26px;
+  padding: clamp(16px, 3.2vw, 28px);
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.78) 0%, rgba(7, 13, 28, 0.88) 100%);
+  backdrop-filter: blur(26px) saturate(185%);
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow:
+    0 28px 75px -16px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.16) inset;
+  overflow: hidden;
+  animation: cockpitLiftIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cockpitLiftIn {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.965);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.magic-rim-glow {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.85) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Top Instrument Strip */
+.magic-header-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: clamp(10px, 2vw, 14px);
+}
+
+.magic-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.magic-brand-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.magic-brand-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(203, 213, 225, 0.9);
+}
+
+.magic-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 9999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #fde68a;
+  background: rgba(120, 53, 15, 0.38);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  transition: color 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
+}
+
+.magic-status-pill.is-ready {
+  color: #6ee7b7;
+  background: rgba(6, 78, 59, 0.42);
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
+.magic-status-pill.is-error {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.42);
+  border-color: rgba(248, 113, 113, 0.42);
+}
+
+.magic-beacon-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.9);
+  animation: transponderPulse 1.4s ease-in-out infinite;
+}
+
+.magic-status-pill.is-ready .magic-beacon-dot {
+  background: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.95);
+  animation-duration: 2.2s;
+}
+
+.magic-status-pill.is-error .magic-beacon-dot {
+  background: #f87171;
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.95);
+}
+
+@keyframes transponderPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+/* Aviation Radar & Great-Circle Flight Stage */
+.magic-aviation-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(92px, 19vw, 128px);
+  border-radius: 18px;
+  margin-bottom: clamp(12px, 2.4vw, 18px);
+  background: radial-gradient(ellipse at 50% 100%, rgba(14, 165, 233, 0.16) 0%, rgba(2, 6, 23, 0.55) 75%);
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  box-shadow: inset 0 0 32px rgba(2, 6, 23, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Subtle ATC Radar Rings & Rotating Sweep */
+.magic-radar-disc {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  bottom: -115px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.magic-radar-ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.magic-radar-ring.ring-1 { width: 100%; height: 100%; }
+.magic-radar-ring.ring-2 { width: 68%; height: 68%; }
+.magic-radar-ring.ring-3 { width: 38%; height: 38%; }
+
+.magic-radar-sweep-cone {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(56, 189, 248, 0) 0deg,
+    rgba(56, 189, 248, 0) 295deg,
+    rgba(56, 189, 248, 0.24) 356deg,
+    rgba(125, 211, 252, 0.55) 360deg
+  );
+  animation: radarSweepRotate 5.5s linear infinite;
+}
+
+@keyframes radarSweepRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Soft High-Altitude Cloud Wisps */
+.magic-cloud-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.magic-cloud {
+  position: absolute;
+  height: 14px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.14), transparent);
+  filter: blur(4px);
+  animation: cloudGlide linear infinite;
+}
+
+.magic-cloud.cloud-1 { width: 110px; top: 24%; left: 100%; animation-duration: 13s; }
+.magic-cloud.cloud-2 { width: 85px; top: 52%; left: 100%; animation-duration: 18s; animation-delay: -6s; opacity: 0.75; }
+.magic-cloud.cloud-3 { width: 130px; top: 72%; left: 100%; animation-duration: 22s; animation-delay: -11s; opacity: 0.55; }
+
+@keyframes cloudGlide {
+  from { transform: translateX(20px); }
+  to { transform: translateX(-760px); }
+}
+
+.magic-flight-svg {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  max-width: 480px;
+}
+
+/* Contrail Synchronized with Aircraft Flight Cycle */
+.magic-contrail-line {
+  stroke-dasharray: 28 100;
+  stroke-dashoffset: 28;
+  animation: contrailSweep 5.2s cubic-bezier(0.38, 0, 0.62, 1) infinite;
+}
+
+@keyframes contrailSweep {
+  0% { stroke-dashoffset: 28; opacity: 0; }
+  12% { opacity: 0.95; }
+  85% { opacity: 0.9; }
+  100% { stroke-dashoffset: -100; opacity: 0; }
+}
+
+/* Airport Hub Sonar Pulse */
+.magic-hub-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: hubSonar 2.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.magic-hub-pulse-delayed {
+  animation-delay: 1.4s;
+}
+
+@keyframes hubSonar {
+  0% { transform: scale(0.35); opacity: 0.85; }
+  100% { transform: scale(1.65); opacity: 0; }
+}
+
+/* Aircraft Anti-Collision Double-Flash Strobe */
+.magic-strobe-light {
+  animation: aircraftStrobe 1.8s linear infinite;
+}
+
+@keyframes aircraftStrobe {
+  0%, 100% { opacity: 0.15; }
+  8% { opacity: 1; }
+  14% { opacity: 0.15; }
+  22% { opacity: 0.95; }
+  28% { opacity: 0.15; }
+}
+
+/* Headline & Subtitle */
+.magic-title-block {
+  text-align: center;
+  margin-bottom: clamp(14px, 2.8vw, 22px);
+}
+
+.magic-headline {
+  font-size: clamp(1.3rem, 4.4vw, 1.95rem);
+  font-weight: 800;
+  letter-spacing: -0.025em !important;
+  line-height: 1.1 !important;
+  color: #f8fafc;
+  background: linear-gradient(180deg, #ffffff 0%, #bae6fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 6px 0;
+}
+
+.magic-subtitle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.68rem, 2vw, 0.78rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7dd3fc;
+  margin: 0;
+}
+
+/* Telemetry Stats Grid */
+.magic-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 12px);
+  width: 100%;
+  margin-bottom: clamp(16px, 3vw, 22px);
+}
+
+@media (min-width: 520px) {
+  .magic-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.magic-stat-card {
+  position: relative;
+  border-radius: 16px;
+  padding: clamp(10px, 2.2vw, 14px) clamp(10px, 2.4vw, 16px);
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow:
+    0 8px 20px -8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+  transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+
+.magic-stat-card:hover {
+  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 0.66);
+  border-color: rgba(125, 211, 252, 0.3);
+}
+
+.magic-stat-card.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(148, 163, 184, 0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: statSkeletonSweep 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes statSkeletonSweep {
+  to { transform: translateX(100%); }
+}
+
+.magic-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.magic-stat-icon {
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  line-height: 1;
+}
+
+.magic-stat-label {
+  font-size: clamp(0.62rem, 1.7vw, 0.7rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.magic-stat-value {
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Actions Footer */
+.magic-actions-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.magic-cta-btn {
+  position: relative;
+  width: 100%;
+  min-height: 50px;
+  padding: 13px 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 55%, #1d4ed8 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 14px 32px -8px rgba(37, 99, 235, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.magic-cta-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 55%, #2563eb 100%);
+  box-shadow:
+    0 18px 36px -8px rgba(56, 189, 248, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.magic-cta-btn:disabled {
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(71, 85, 105, 0.45);
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.magic-cta-btn.is-exported {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-color: rgba(110, 231, 183, 0.55);
+  box-shadow: 0 14px 32px -8px rgba(16, 185, 129, 0.55);
+}
+
+.magic-cta-sheen {
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 65%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.25) 50%, transparent 80%);
+  pointer-events: none;
+}
+
+.magic-cta-btn:not(:disabled) .magic-cta-sheen {
+  animation: runwaySheen 3.6s ease-in-out infinite;
+}
+
+@keyframes runwaySheen {
+  0%, 60% { left: -120%; }
+  100% { left: 160%; }
+}
+
+.magic-cta-icon {
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+.magic-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: #94a3b8;
+  font-size: clamp(0.7rem, 2vw, 0.78rem);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.magic-review-btn:hover {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Staggered Entrance Elegance for Magic Mode */
+.magic-item {
+  opacity: 0;
+  animation: dominoCascade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 80ms; }
+.delay-150 { animation-delay: 140ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 260ms; }
+.delay-350 { animation-delay: 310ms; }
+.delay-400 { animation-delay: 360ms; }
+.delay-450 { animation-delay: 410ms; }
+.delay-500 { animation-delay: 460ms; }
+.delay-550 { animation-delay: 510ms; }
+.delay-600 { animation-delay: 560ms; }
+
+/* Compact height adjustment for short mobile landscape screens */
+@media (max-height: 620px) {
+  .magic-cockpit-card {
+    padding: 14px 18px;
+    border-radius: 20px;
+  }
+  .magic-aviation-stage {
+    height: 82px;
+    margin-bottom: 10px;
+  }
+  .magic-title-block {
+    margin-bottom: 10px;
+  }
+  .magic-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .magic-stat-card {
+    padding: 8px 10px;
+    gap: 3px;
+  }
+  .magic-cta-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+/*
+ * Accessibility: Reduced Motion
  */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .magic-item {
+  .animate-fade-in,
+  .magic-item,
+  .magic-cockpit-card,
+  .magic-backdrop {
     animation: none !important;
     transition: opacity 200ms ease !important;
     transform: none !important;
     opacity: 1 !important;
   }
-  body::before, body::after, .animate-radar-sweep, .animate-takeoff {
+  body::before,
+  body::after,
+  .magic-radar-sweep-cone,
+  .magic-cloud,
+  .magic-contrail-line,
+  .magic-hub-pulse,
+  .magic-strobe-light,
+  .magic-cta-sheen,
+  .magic-beacon-dot,
+  .magic-atmo-glow {
     animation: none !important;
+  }
+  .magic-stat-card.is-loading::after {
     display: none !important;
   }
   button:active, .btn:active, a:active {
@@ -258,12 +809,17 @@ body.magic-transparent footer {
   }
 }
 
-/* 
- * Accessibility: Reduced Transparency[cite: 9]
- * Convert glass layers to solid colors.
+/*
+ * Accessibility: Reduced Transparency
  */
 @media (prefers-reduced-transparency: reduce) {
-  .apple-glass, header, .backdrop-blur-md, .backdrop-blur-sm, .backdrop-blur-xl {
+  .apple-glass,
+  header,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-xl,
+  .magic-backdrop,
+  .magic-cockpit-card {
     background: #0f172a !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
